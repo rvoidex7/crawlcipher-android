@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <link rel="stylesheet" href="xterm.min.css" />
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #101010;
+      overflow: hidden;
+      font-family: monospace;
+    }
+    #terminal {
+      width: 100%;
+      height: calc(100% - 24px);
+    }
+    #status {
+      height: 24px;
+      line-height: 24px;
+      font-size: 12px;
+      color: #8cc6ff;
+      border-top: 1px solid #2b2b2b;
+      padding: 0 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+<div id="terminal"></div>
+<div id="status">Initializing runtime...</div>
+<script src="xterm.min.js"></script>
+<script>
+  const term = new Terminal({
+    convertEol: false,
+    cursorBlink: false,
+    scrollback: 5000,
+    allowProposedApi: false,
+    theme: {
+      background: '#101010',
+      foreground: '#D8FFD8',
+      cursor: '#FFFFFF'
+    }
+  });
+  term.open(document.getElementById('terminal'));
+
+  function decodeBase64(value) {
+    try {
+      return decodeURIComponent(escape(window.atob(value)));
+    } catch (_) {
+      return window.atob(value);
+    }
+  }
+
+  window.CrawlCipherTerminal = {
+    appendBase64: function (encoded) {
+      term.write(decodeBase64(encoded));
+    },
+    setStatusBase64: function (encoded) {
+      document.getElementById('status').textContent = decodeBase64(encoded);
+    }
+  };
+</script>
+</body>
+</html>
