@@ -1,0 +1,50 @@
+name: Android CI and Release
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+
+      - name: Install Ruby dependencies
+        run: bundle install
+
+      - name: Run unit tests
+        run: bundle exec fastlane android test
+
+      - name: Build release bundle
+        run: bundle exec fastlane android build_release_bundle
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
+
+      - name: Deploy to Play Internal
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GOOGLE_PLAY_JSON_KEY: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
+        run: bundle exec fastlane android deploy_internal
