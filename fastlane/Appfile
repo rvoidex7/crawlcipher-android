@@ -1,0 +1,3 @@
+package_name("com.crawlcipher.wrapper")
+
+json_key_file(ENV["GOOGLE_PLAY_JSON_KEY"] || "fastlane/play-api-key.json")
