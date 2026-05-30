@@ -1,4 +1,4 @@
-CrawlCipher Android wrapper package.
+CrawlCipher-Android wrapper package.
 
 - In-app terminal-like interface (no external Termux installation required)
 - Touch input controls for command entry
