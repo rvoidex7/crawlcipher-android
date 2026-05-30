@@ -111,7 +111,12 @@ class TerminalHost(
             if (readCount > 0) {
                 val outputChunk = String(buffer, 0, readCount, StandardCharsets.UTF_8)
                 listener.onOutput(outputChunk)
-                debugLog.add("stdout", outputChunk.replace("\n", "\\n"))
+                val normalized = if (outputChunk.length > 300) {
+                    outputChunk.take(300) + "...(truncated)"
+                } else {
+                    outputChunk
+                }
+                debugLog.add("stdout", normalized)
             }
         }
     }

@@ -2,12 +2,12 @@ package com.crawlcipher.wrapper
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Base64
 import java.io.File
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
-import java.util.Base64
 
 class RuntimeBinaryProvider(private val context: Context) {
     data class LaunchConfiguration(
@@ -175,7 +175,7 @@ class RuntimeBinaryProvider(private val context: Context) {
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replace("\\s".toRegex(), "")
-            val keyBytes = Base64.getDecoder().decode(pemBody)
+            val keyBytes = Base64.decode(pemBody, Base64.DEFAULT)
             val keySpec = X509EncodedKeySpec(keyBytes)
             val publicKey = KeyFactory.getInstance("RSA").generatePublic(keySpec)
             val signature = Signature.getInstance("SHA256withRSA")
@@ -188,7 +188,7 @@ class RuntimeBinaryProvider(private val context: Context) {
                     signature.update(buffer, 0, read)
                 }
             }
-            signature.verify(Base64.getDecoder().decode(signatureBase64))
+            signature.verify(Base64.decode(signatureBase64, Base64.DEFAULT))
         } catch (_: Exception) {
             false
         }

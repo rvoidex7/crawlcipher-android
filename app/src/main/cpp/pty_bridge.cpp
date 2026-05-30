@@ -91,9 +91,9 @@ Java_com_crawlcipher_wrapper_PtyBridge_nativeStart(
         return 0;
     }
 
-    char* slaveName = ptsname(masterFd);
-    if (slaveName == nullptr) {
-        logError("ptsname failed");
+    char slaveNameBuffer[128] = {};
+    if (ptsname_r(masterFd, slaveNameBuffer, sizeof(slaveNameBuffer)) != 0) {
+        logError("ptsname_r failed");
         close(masterFd);
         return 0;
     }
@@ -115,7 +115,7 @@ Java_com_crawlcipher_wrapper_PtyBridge_nativeStart(
 
     if (pid == 0) {
         setsid();
-        int slaveFd = open(slaveName, O_RDWR);
+        int slaveFd = open(slaveNameBuffer, O_RDWR);
         if (slaveFd < 0) {
             _exit(127);
         }
@@ -133,11 +133,20 @@ Java_com_crawlcipher_wrapper_PtyBridge_nativeStart(
             chdir(cwd.c_str());
         }
 
+        std::vector<std::vector<char>> argvStorage;
+        argvStorage.reserve(arguments.size() + 1);
+
+        argvStorage.emplace_back(executable.begin(), executable.end());
+        argvStorage.back().push_back('\0');
+        for (const auto& argument : arguments) {
+            argvStorage.emplace_back(argument.begin(), argument.end());
+            argvStorage.back().push_back('\0');
+        }
+
         std::vector<char*> argv;
-        argv.reserve(arguments.size() + 2);
-        argv.push_back(const_cast<char*>(executable.c_str()));
-        for (auto& argument : arguments) {
-            argv.push_back(const_cast<char*>(argument.c_str()));
+        argv.reserve(argvStorage.size() + 1);
+        for (auto& item : argvStorage) {
+            argv.push_back(item.data());
         }
         argv.push_back(nullptr);
 
