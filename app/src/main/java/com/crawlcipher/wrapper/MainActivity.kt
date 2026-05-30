@@ -9,25 +9,36 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
-    private val session = TerminalSession(PlaceholderRuntime())
+    private lateinit var output: TextView
+    private lateinit var outputContainer: ScrollView
+    private lateinit var input: EditText
+    private lateinit var send: Button
+    private lateinit var terminalHost: TerminalHost
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val output = findViewById<TextView>(R.id.outputText)
-        val input = findViewById<EditText>(R.id.inputText)
-        val send = findViewById<Button>(R.id.sendButton)
-        val outputContainer = findViewById<ScrollView>(R.id.outputContainer)
+        output = findViewById(R.id.outputText)
+        input = findViewById(R.id.inputText)
+        send = findViewById(R.id.sendButton)
+        outputContainer = findViewById(R.id.outputContainer)
 
-        output.text = session.start()
-        scrollToBottom(outputContainer)
+        terminalHost = TerminalHost(applicationContext, object : TerminalHost.Listener {
+            override fun onOutput(text: String) {
+                runOnUiThread {
+                    output.append(text)
+                    scrollToBottom(outputContainer)
+                }
+            }
+        })
 
         val submitAction = {
             val text = input.text?.toString().orEmpty()
-            output.text = session.submit(text)
+            if (text.isNotEmpty()) {
+                terminalHost.send("$text\n")
+            }
             input.text?.clear()
-            scrollToBottom(outputContainer)
         }
 
         send.setOnClickListener { submitAction() }
@@ -45,6 +56,16 @@ class MainActivity : AppCompatActivity() {
                 false
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        terminalHost.start()
+    }
+
+    override fun onDestroy() {
+        terminalHost.stop()
+        super.onDestroy()
     }
 
     private fun scrollToBottom(scrollView: ScrollView) {
